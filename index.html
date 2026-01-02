@@ -1127,6 +1127,10 @@
 
             messages = [{ role: "system", content: sysPrompt }];
 
+            // Saludo personalizado del asistente
+            appendMsg('ai', "Hola. Soy tu Asistente Virtual. Estoy encantado de conocerte. Te ayudaré a aprender inglés. No te preocupes, hablaré lentamente y utilizaré palabras fáciles. Nos divertiremos aprendiendo juntos.");
+            messages.push({ role: "assistant", content: "Hello. My name is Virtual Assistant. I am delighted to meet you. I will help you learn English. Don't worry, I will speak slowly and use easy words. We will have fun learning together." });
+
             // Trigger first AI message - CRITICAL FIX: Send SYSTEM PROMPT history
             document.getElementById('typingIndicator').classList.remove('hidden');
 
@@ -1279,7 +1283,7 @@
             let text = raw;
             let translation = "";
             let data = {};
-            let jsonMatch = raw.match(/```json\n([\s\S]*?)\n```/);
+            let jsonMatch = raw.match(/```json\s*([\s\S]*?)\s*```/);
 
             if (jsonMatch) {
                 try {
