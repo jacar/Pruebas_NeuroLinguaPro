@@ -1,1 +1,15 @@
-{"rewrites":[{"source":"/(.*)","destination":"/index.html"}]}
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "installCommand": "pip install -r requirements.txt",
+  "builds": [
+    {
+      "src": "server.py",
+      "use": "@vercel/python"
+    }
+  ]
+}
