@@ -5,6 +5,7 @@
       "destination": "/index.html"
     }
   ],
+  "installCommand": "pip install -r requirements.txt",
 
   "builds": [
     {
