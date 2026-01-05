@@ -1,7 +1,7 @@
 import os
 import random
 import json
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, Response
 from groq import Groq
 from dotenv import load_dotenv
 from flask_cors import CORS
@@ -134,6 +134,36 @@ def tts_sync():
         return Response(audio_data, mimetype="audio/mpeg")
     except Exception as e:
          return jsonify({'error': str(e)}), 500
+
+from TTS.api import TTS # New import for Coqui TTS
+
+@app.route('/api/coqui_tts', methods=['POST'])
+def coqui_tts():
+    # This endpoint will handle Coqui AI TTS requests.
+    # The actual implementation will be added once the Python environment is set up
+    # and the 'TTS' library is successfully installed.
+
+    data = request.json
+    text = data.get('text')
+    lang = data.get('lang', 'en') # Default to English, can be passed from frontend
+
+    if not text:
+        return jsonify({'error': 'No text provided'}), 400
+
+    # Placeholder for Coqui TTS generation logic
+    # Example (will require TTS model loading and audio conversion):
+    # try:
+    #     # Load model (consider global loading for efficiency)
+    #     # tts = TTS(model_name="tts_models/en/ljspeech/tacotron2-DDC", progress_bar=False, gpu=False)
+    #     # audio_wav = tts.tts(text=text, speaker=tts.speakers[0], language=lang)
+    #     # Convert audio_wav (numpy array) to bytes (e.g., using io.BytesIO and soundfile)
+    #     # return Response(audio_bytes, mimetype="audio/wav")
+    #     pass
+    # except Exception as e:
+    #     print(f"Coqui TTS Error: {e}")
+    #     return jsonify({'error': str(e)}), 500
+
+    return jsonify({'message': 'Coqui TTS endpoint is a placeholder. Implementation pending Python environment setup.'}), 200
     print("NeuroLingua Elite Local Server starting...")
     print("Open http://127.0.0.1:5000 in your browser to avoid CORS errors.")
     app.run(port=5000, debug=True)

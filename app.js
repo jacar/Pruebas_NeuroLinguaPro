@@ -8,6 +8,8 @@ let messages = [];
 let skills = { fluency: 20, grammar: 15, vocabulary: 10 };
 let glossary = [];
 let grammarInsights = [];
+let currentQuizData = null;
+let correctionMode = localStorage.getItem('correction_mode') === 'true';
 
 // DOM Elements
 const apiModal = document.getElementById('api-modal');
@@ -28,6 +30,11 @@ const levelBtns = document.querySelectorAll('.level-btn');
 const glossaryList = document.getElementById('glossary-list');
 const grammarList = document.getElementById('grammar-list');
 const vocabCount = document.getElementById('vocab-count');
+const quizContainer = document.getElementById('quiz-container');
+const quizQuestionsDiv = document.getElementById('quiz-questions');
+const submitQuizBtn = document.getElementById('submit-quiz-btn');
+const quizResultsDiv = document.getElementById('quiz-results');
+const correctionModeToggle = document.getElementById('correction-mode-toggle');
 
 // Initialize App
 function init() {
@@ -35,6 +42,15 @@ function init() {
         showDashboard();
     } else {
         showLanding();
+    }
+
+    // Set initial state of correction mode toggle
+    if (correctionModeToggle) {
+        correctionModeToggle.checked = correctionMode;
+        correctionModeToggle.addEventListener('change', () => {
+            correctionMode = correctionModeToggle.checked;
+            localStorage.setItem('correction_mode', correctionMode);
+        });
     }
 }
 
@@ -58,6 +74,25 @@ levelBtns.forEach(btn => {
         btn.classList.add('active');
         currentLevel = btn.dataset.level;
     });
+}
+
+const LEVELS = ['basic', 'intermediate', 'advanced'];
+
+function advanceLevel() {
+    const currentIndex = LEVELS.indexOf(currentLevel);
+    if (currentIndex < LEVELS.length - 1) {
+        currentLevel = LEVELS[currentIndex + 1];
+        // Update UI to reflect new level
+        levelBtns.forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.level === currentLevel) {
+                btn.classList.add('active');
+            }
+        });
+        alert(`¡Has avanzado al nivel ${currentLevel.toUpperCase()}!`);
+    } else {
+        alert('¡Has completado todos los niveles disponibles!');
+    }
 });
 
 // API Key Management
@@ -125,6 +160,7 @@ function processAIResponse(raw) {
             if (data.vocabulary) updateGlossary(data.vocabulary);
             if (data.grammar_tips) updateGrammarInsights(data.grammar_tips);
             if (data.scores) updateSkills(data.scores);
+            if (data.quiz) renderQuiz(data.quiz);
         } catch (e) { console.error("JSON Parse Error", e); }
     }
 
@@ -134,17 +170,36 @@ function processAIResponse(raw) {
 
 // Prompt Engineering
 function getSystemPrompt() {
+    let correctionPrompt = '';
+    if (correctionMode) {
+        correctionPrompt = `
+    CORRECTION MODE ACTIVE: Provide detailed grammar, spelling, style, and vocabulary suggestions in English only. Focus on improving the user's expression.`;
+    }
+
     const base = `You are a professional English tutor in a highly immersive simulation.
     Your goal is to TEACH while staying in character. 
     
     CRITICAL: You must provide your response in two parts:
     1. The conversation in character.
-    2. A JSON block at the end with this structure:
+    2. A JSON block at the end with this structure. After 5 turns, you MUST include a quiz in the JSON block to test the user's understanding of the conversation.
     \`\`\`json
     {
       "vocabulary": [{"word": "string", "meaning": "string"}],
       "grammar_tips": ["string"],
-      "scores": {"fluency": number, "grammar": number, "vocab": number}
+      "scores": {"fluency": number, "grammar": number, "vocab": number},
+      "quiz": {
+        "title": "string",
+        "questions": [
+          {
+            "id": number,
+            "type": "multiple_choice" | "fill_in_the_blank" | "true_false",
+            "question": "string",
+            "options": ["string", "string", "string", "string"], // Only for multiple_choice
+            "correct_answer": "string", // The correct answer or the word to fill in
+            "explanation": "string" // Optional: explanation of the correct answer
+          }
+        ]
+      }
     }
     \`\`\`
     
@@ -152,7 +207,7 @@ function getSystemPrompt() {
     LEVEL: ${currentLevel.toUpperCase()}.
     BASIC: Use Spanish translations for hard words.
     INTERMEDIATE: Focus on idioms and natural phrasing.
-    ADVANCED: Focus on formal/informal nuances.`;
+    ADVANCED: Focus on formal/informal nuances.${correctionPrompt}`;
 
     return base;
 }
@@ -259,6 +314,115 @@ function updateSkills(deltas) {
         if (bar) bar.style.width = `${skills[fullKey]}%`;
         if (score) score.innerText = `${Math.round(skills[fullKey])}%`;
     });
+}
+
+function renderQuiz(quizData) {
+    currentQuizData = quizData; // Store quiz data globally
+    chatForm.classList.add('hidden');
+    quizContainer.classList.remove('hidden');
+    quizQuestionsDiv.innerHTML = ''; // Clear previous questions
+
+    quizData.questions.forEach(q => {
+        const questionElement = document.createElement('div');
+        questionElement.className = 'bg-white p-4 rounded-lg shadow-md';
+        let optionsHtml = '';
+
+        if (q.type === 'multiple_choice' && q.options) {
+            optionsHtml = q.options.map((option, index) => `
+                <label class="block mt-2">
+                    <input type="radio" name="question-${q.id}" value="${option}" class="mr-2">
+                    ${option}
+                </label>
+            `).join('');
+        } else if (q.type === 'fill_in_the_blank') {
+            optionsHtml = `
+                <input type="text" name="question-${q.id}" class="mt-2 p-2 border rounded-md w-full" placeholder="Escribe tu respuesta aquí">
+            `;
+        } else if (q.type === 'true_false') {
+            optionsHtml = `
+                <label class="block mt-2">
+                    <input type="radio" name="question-${q.id}" value="true" class="mr-2">
+                    Verdadero
+                </label>
+                <label class="block mt-2">
+                    <input type="radio" name="question-${q.id}" value="false" class="mr-2">
+                    Falso
+                </label>
+            `;
+        }
+
+        questionElement.innerHTML = `
+            <p class="font-semibold">${q.question}</p>
+            <div class="mt-2">${optionsHtml}</div>
+        `;
+        quizQuestionsDiv.appendChild(questionElement);
+    });
+}
+
+submitQuizBtn.addEventListener('click', submitQuiz);
+
+function submitQuiz() {
+    let score = 0;
+    const totalQuestions = currentQuizData.questions.length;
+    const quizResults = [];
+
+    currentQuizData.questions.forEach(q => {
+        let userAnswer = '';
+        let isCorrect = false;
+
+        if (q.type === 'multiple_choice' || q.type === 'true_false') {
+            const selectedOption = document.querySelector(`input[name="question-${q.id}"]:checked`);
+            if (selectedOption) {
+                userAnswer = selectedOption.value;
+                isCorrect = (userAnswer.toLowerCase() === q.correct_answer.toLowerCase());
+            }
+        } else if (q.type === 'fill_in_the_blank') {
+            const inputField = document.querySelector(`input[name="question-${q.id}"]`);
+            if (inputField) {
+                userAnswer = inputField.value.trim();
+                isCorrect = (userAnswer.toLowerCase() === q.correct_answer.toLowerCase());
+            }
+        }
+
+        if (isCorrect) {
+            score++;
+        }
+        quizResults.push({ question: q.question, userAnswer, correctAnswer: q.correct_answer, isCorrect, explanation: q.explanation });
+    });
+
+    quizQuestionsDiv.classList.add('hidden');
+    submitQuizBtn.classList.add('hidden');
+    quizResultsDiv.classList.remove('hidden');
+
+    let resultsHtml = `<h4 class="text-lg font-bold mb-2">Resultados del Quiz:</h4>`;
+    resultsHtml += `<p class="mb-4">Obtuviste ${score} de ${totalQuestions} correctas.</p>`;
+
+    quizResults.forEach(result => {
+        resultsHtml += `
+            <div class="mb-3 p-3 rounded-md ${result.isCorrect ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                <p><strong>Pregunta:</strong> ${result.question}</p>
+                <p><strong>Tu respuesta:</strong> ${result.userAnswer || 'No respondida'}</p>
+                <p><strong>Respuesta correcta:</strong> ${result.correctAnswer}</p>
+                ${result.explanation ? `<p><strong>Explicación:</strong> ${result.explanation}</p>` : ''}
+            </div>
+        `;
+    });
+
+    quizResultsDiv.innerHTML = resultsHtml;
+
+    if (score === totalQuestions) {
+        alert('¡Felicidades! Has completado el quiz correctamente.');
+        advanceLevel();
+    } else {
+        alert('Inténtalo de nuevo para desbloquear el siguiente nivel.');
+    }
+
+    // After quiz, show chat form again
+    quizContainer.classList.add('hidden');
+    chatForm.classList.remove('hidden');
+    quizQuestionsDiv.innerHTML = ''; // Clear quiz questions
+    quizResultsDiv.innerHTML = ''; // Clear quiz results
+    submitQuizBtn.classList.remove('hidden'); // Show submit button again
 }
 
 init();
