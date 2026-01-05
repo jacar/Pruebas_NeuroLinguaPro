@@ -1,1 +1,5 @@
-coqui-tts
+groq
+python-dotenv
+flask
+flask-cors
+edge-tts
