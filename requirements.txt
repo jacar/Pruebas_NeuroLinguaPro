@@ -1,6 +1,2 @@
-groq
-python-dotenv
 flask
 flask-cors
-edge-tts
-coqui-tts
