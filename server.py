@@ -135,35 +135,33 @@ def tts_sync():
     except Exception as e:
          return jsonify({'error': str(e)}), 500
 
-from TTS.api import TTS # New import for Coqui TTS
+# from TTS.api import TTS # New import for Coqui TTS - Temporarily commented out due to Python version incompatibility
 
-@app.route('/api/coqui_tts', methods=['POST'])
-def coqui_tts():
-    # This endpoint will handle Coqui AI TTS requests.
-    # The actual implementation will be added once the Python environment is set up
-    # and the 'TTS' library is successfully installed.
+# @app.route('/api/coqui_tts', methods=['POST'])
+# def coqui_tts():
+#     # This endpoint will handle Coqui AI TTS requests.
+#     # The actual implementation will be added once the Python environment is set up
+#     # and the 'TTS' library is successfully installed.
 
-    data = request.json
-    text = data.get('text')
-    lang = data.get('lang', 'en') # Default to English, can be passed from frontend
+#     data = request.json
+#     text = data.get('text')
+#     lang = data.get('lang', 'en') # Default to English, can be passed from frontend
 
-    if not text:
-        return jsonify({'error': 'No text provided'}), 400
+#     if not text:
+#         return jsonify({'error': 'No text provided'}), 400
 
-    # Placeholder for Coqui TTS generation logic
-    # Example (will require TTS model loading and audio conversion):
-    # try:
-    #     # Load model (consider global loading for efficiency)
-    #     # tts = TTS(model_name="tts_models/en/ljspeech/tacotron2-DDC", progress_bar=False, gpu=False)
-    #     # audio_wav = tts.tts(text=text, speaker=tts.speakers[0], language=lang)
-    #     # Convert audio_wav (numpy array) to bytes (e.g., using io.BytesIO and soundfile)
-    #     # return Response(audio_bytes, mimetype="audio/wav")
-    #     pass
-    # except Exception as e:
-    #     print(f"Coqui TTS Error: {e}")
-    #     return jsonify({'error': str(e)}), 500
+#     # Placeholder for Coqui TTS generation logic
+#     # Example (will require TTS model loading and audio conversion):
+#     # try:
+#     #     # Load model (consider global loading for efficiency)
+#     #     # tts = TTS(model_name="tts_models/en/ljspeech/tacotron2-DDC", progress_bar=False, gpu=False)
+#     #     # audio_wav = tts.tts(text=text, speaker=tts.speakers[0], language=lang)
+#     #     # Convert audio_wav (numpy array) to bytes (e.g., using io.BytesIO and soundfile)
+#     #     # return Response(audio_bytes, mimetype="audio/wav")
+#     #     pass
+#     # except Exception as e:
+#     #     print(f"Coqui TTS Error: {e}")
+#     #     return jsonify({'error': str(e)}), 500
 
-    return jsonify({'message': 'Coqui TTS endpoint is a placeholder. Implementation pending Python environment setup.'}), 200
-    print("NeuroLingua Elite Local Server starting...")
-    print("Open http://127.0.0.1:5000 in your browser to avoid CORS errors.")
-    app.run(port=5000, debug=True)
+#     return jsonify({'message': 'Coqui TTS endpoint is a placeholder. Implementation pending Python environment setup.'}), 200
+# # Removed print statements and app.run for `flask run` compatibility
