@@ -4,6 +4,7 @@ const { WebSocket } = require('ws');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 require('dotenv').config();
 
 const app = express();
@@ -25,7 +26,7 @@ app.post('/api/tts_sync', async (req, res) => {
     if (!text) return res.status(400).json({ error: 'No text provided' });
 
     const targetVoice = voice || 'en-US-ChristopherNeural';
-    const tempFile = path.join(__dirname, `tts_${uuidv4()}.mp3`);
+    const tempFile = path.join(os.tmpdir(), `tts_${uuidv4()}.mp3`);
     const workerScript = path.join(__dirname, 'tts_worker.js');
 
     try {
