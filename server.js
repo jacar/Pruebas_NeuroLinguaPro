@@ -67,6 +67,13 @@ app.post('/api/tts_sync', async (req, res) => {
 
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-    console.log(`NeuroLingua Elite Node Server running on http://localhost:${PORT}`);
-});
+
+// Export the app for Vercel Serverless
+module.exports = app;
+
+// Only listen if run directly (local dev)
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`NeuroLingua Elite Node Server running on http://localhost:${PORT}`);
+    });
+}
